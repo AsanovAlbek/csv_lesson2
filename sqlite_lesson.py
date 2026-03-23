@@ -30,6 +30,33 @@ cursor.execute("SELECT * FROM Food WHERE price > ?", (100, ))
 for food in cursor.fetchall():
     print(dict(food))
 
+cursor.execute("SELECT COUNT(*) FROM Food WHERE price > ?", (100, ))
+for food in cursor.fetchall():
+    print(dict(food))
+
+# Обновление данных
+# cursor.execute("UPDATE Food SET price = price * 0.8 WHERE name = ?", ('Ростмастер', ))
+
+# Удаление данных
+cursor.execute("DELETE FROM Food WHERE name = ?", ('Наггетсы', ))
+connection.commit()
+
 # закрываем
 cursor.close()
 connection.close()
+
+# Транзакция
+connection = sqlite3.connect("rostics.db")
+connection.row_factory = sqlite3.Row # Настройка, чтобы select возвращал словарь
+cursor = connection.cursor()
+
+try:
+    cursor.execute("INSERT INTO Food(name, price) VALUES (?, ?)", ("Крылышки", 200)) # 1
+    cursor.execute("UPDATE Food SET price = 150 WHERE name = ", ("Крылышки",)) # 2
+    raise Exception("Хьюстон, у нас проблема")
+    connection.commit()
+except:
+    connection.rollback()
+finally:
+    cursor.close()
+    connection.close()
