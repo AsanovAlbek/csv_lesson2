@@ -45,18 +45,26 @@ connection.commit()
 cursor.close()
 connection.close()
 
-# Транзакция
 connection = sqlite3.connect("rostics.db")
 connection.row_factory = sqlite3.Row # Настройка, чтобы select возвращал словарь
 cursor = connection.cursor()
 
+# Пример SQL - инъекции (никогда так не делайте!)
+food_id = input("Введите id:")
+# Попробуйте ввести 1 OR 1 = 1 и ВСЕ ВАШИ ДАННЫЕ УДАЛЯТСЯ!!!!!
+cursor.execute(f"DELETE FROM Food WHERE id = {food_id}")
+connection.commit()
+
+# Транзакция
 try:
-    cursor.execute("INSERT INTO Food(name, price) VALUES (?, ?)", ("Крылышки", 200)) # 1
-    cursor.execute("UPDATE Food SET price = 150 WHERE name = ", ("Крылышки",)) # 2
-    raise Exception("Хьюстон, у нас проблема")
+    cursor.execute("INSERT OR IGNORE INTO Food(name, price) VALUES (?, ?)", ("Крылышки", 200)) # 1
+    cursor.execute("UPDATE Food SET price = 150 WHERE name = ?", ("Крылышки",)) # 2
+    # raise Exception("Хьюстон, у нас проблема")
     connection.commit()
-except:
+except Exception as e:
     connection.rollback()
+    print("Откат транзакции.", e)
 finally:
     cursor.close()
     connection.close()
+
